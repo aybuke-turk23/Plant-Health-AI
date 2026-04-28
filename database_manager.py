@@ -2,22 +2,22 @@ import sqlite3
 import os
 from datetime import datetime
 
-# 1. Veri Klasörü ve Otomatik Klasör Oluşturma [cite: 97, 98]
+# 1. Veri Klasörü ve Otomatik Klasör Oluşturma 
 DB_PATH = 'database/plant_health.sqlite'
 
 def veritabani_hazirla():
-    # Klasör yoksa hata vermemesi için otomatik oluşturma ekliyoruz [cite: 99, 100]
+    # Klasör yoksa hata vermemesi için otomatik oluşturma ekliyoruz 
     if not os.path.exists('database'):
         os.makedirs('database')
         print("database/ klasörü başarıyla oluşturuldu.")
 
     baglanti = None
     try:
-        # Teknolojinin Seçilmesi: SQLite [cite: 62]
+        # Teknolojinin Seçilmesi: SQLite
         baglanti = sqlite3.connect(DB_PATH)
         cursor = baglanti.cursor()
 
-        # 2. Analiz Tablosuna "Bitki Türü" (plant_type) Ekleme [cite: 101, 105]
+        # 2. Analiz Tablosuna "Bitki Türü" (plant_type) Ekleme
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS Analyses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
