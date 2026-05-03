@@ -3,12 +3,26 @@ import base64
 import requests
 import datetime
 from dotenv import load_dotenv
+from src.backend.security_manager import validate_input, check_rate_limit# .env dosyasından anahtarı yüklüyoruz
 
 # Gizlilik Kontrolü: API anahtarını asla elle yazmıyoruz
 load_dotenv()
 API_KEY = os.getenv("PLANT_ID_API_KEY")
 
 def analyze_plant_health(image_path):
+    # 1. Bekleme Süresi Kontrolü
+    can_request, rate_msg = check_rate_limit()
+    if not can_request:
+        print(rate_msg)
+        return None
+
+    # 2. Dosya Geçerlilik Kontrolü
+    is_valid, val_msg = validate_input(image_path)
+    if not is_valid:
+        print(val_msg)
+        return None
+    
+    # ... API çağırma kodları buradan devam eder ...
     """
    
     1. Güvenlik Kontrolü (is_plant)
