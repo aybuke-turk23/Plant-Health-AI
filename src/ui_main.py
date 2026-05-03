@@ -44,7 +44,7 @@ def analiz_et():
     pencere.update() # Arayüzün donmasını engellemek için
 
     try:
-        # Meral'in AI Modelini Çalıştır
+        # AI Modelini Çalıştır
         hastalik, guven = predict_leaf(resim_yolu)
         
         if hastalik:
@@ -52,7 +52,7 @@ def analiz_et():
             sonuc_metni = f"🌿 Sonuç: {hastalik}\n🎯 Güven Oranı: %{guven:.2f}"
             sonuc_label.config(text=sonuc_metni, fg="#2e7d32")
             
-            # Emine'nin Veritabanına Kaydet
+            # Veritabanına Kaydet
             # Bitki türünü tahmin sonucunun ilk kelimesinden alıyoruz (Örn: Tomato)
             bitki_turu = hastalik.split()[0] 
             analiz_kaydet(bitki_turu, resim_yolu, hastalik, guven)
