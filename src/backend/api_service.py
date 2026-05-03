@@ -1,43 +1,72 @@
 import os
 import base64
 import requests
+import datetime
 from dotenv import load_dotenv
 
-# .env dosyasından anahtarı yüklüyoruz
+# Gizlilik Kontrolü: API anahtarını asla elle yazmıyoruz
 load_dotenv()
 API_KEY = os.getenv("PLANT_ID_API_KEY")
 
 def analyze_plant_health(image_path):
     """
-    Seçilen resmi API'ye gönderir ve analiz sonucunu döner.
+    Main.py içindeki tüm anlamlı mantıklar buraya taşındı:
+    1. Güvenlik Kontrolü (is_plant)
+    2. Hata Yönetimi (Exception Handling)
+    3. Veri Ayrıştırma (Data Schema)
     """
     if not API_KEY:
-        print("Hata: API anahtarı bulunamadı! .env dosyasını kontrol edin.")
-        return None
+        return {"error": "API anahtarı bulunamadı! .env dosyasını kontrol edin."}
 
     url = "https://plant.id/api/v3/health_assessment"
     
-    # Resmi API'nin istediği base64 formatına çeviriyoruz
-    with open(image_path, "rb") as file:
-        image_data = base64.b64encode(file.read()).decode("utf-8")
-
-    headers = {
-        "Content-Type": "application/json",
-        "Api-Key": API_KEY
-    }
-
-    payload = {
-        "images": [image_data],
-        "latitude": 38.35, # Malatya koordinatları
-        "longitude": 38.33,
-        "similar_images": True
-    }
-
     try:
-        print(" API'ye istek gönderiliyor...")
-        response = requests.post(url, json=payload, headers=headers)
+        # Resmi base64 formatına çeviriyoruz
+        with open(image_path, "rb") as file:
+            image_data = base64.b64encode(file.read()).decode("utf-8")
+
+        payload = {
+            "images": [image_data],
+            "latitude": 38.67, # Elazığ koordinatları
+            "longitude": 39.22,
+            "similar_images": True
+        }
+
+        # API İsteği (Bağlantı kopmalarına karşı timeout eklendi)
+        response = requests.post(url, json=payload, headers={"Api-Key": API_KEY}, timeout=20)
+        
+        # Hata Yakalama: Kredi bittiyse (402) yakalıyoruz
+        if response.status_code == 402:
+            return {"error": "API kredisi bitti!"}
+            
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Bağlantı Hatası: {e}")
-        return None
+        raw_data = response.json()
+
+        # --- MANTIKLI KOD TAŞIMA: Siber Güvenlik ---
+        # Eğer gönderilen resim bitki değilse süreci durduruyoruz
+        result_data = raw_data.get("result", {})
+        if not result_data.get("is_plant", {}).get("binary", False):
+            return {"error": "Bu bir bitki değil! Analiz durduruldu."}
+
+        # --- MANTIKLI KOD TAŞIMA: Veri Ayrıştırma (Data Parsing) ---
+        # Beray'ın istediği o sade JSON formatına çeviriyoruz
+        disease_info = result_data.get("disease", {}).get("suggestions", [{}])[0]
+        
+        clean_output = {
+            "status": "healthy" if result_data.get("is_healthy", {}).get("binary", False) else "sick",
+            "disease": disease_info.get("name", "Bilinmiyor"),
+            "accuracy": int(disease_info.get("probability", 0) * 100),
+            "treatment": disease_info.get("details", {}).get("treatment", "Öneri bulunamadı.")
+        }
+
+        # Logging: Esma için raporlama kaydı tutuluyor
+        with open("analysis_history.log", "a", encoding="utf-8") as f:
+            f.write(f"{datetime.datetime.now()}: {clean_output['disease']} - %{clean_output['accuracy']}\n")
+
+        return clean_output
+
+    except requests.exceptions.ConnectionError:
+        # Hata Yakalama: İnternet koptuğunda crash olmayı engelliyoruz
+        return {"error": "İnternet bağlantınızı kontrol edin."}
+    except Exception as e:
+        return {"error": f"Sistem hatası: {str(e)}"}
