@@ -10,7 +10,7 @@ API_KEY = os.getenv("PLANT_ID_API_KEY")
 
 def analyze_plant_health(image_path):
     """
-    Main.py içindeki tüm anlamlı mantıklar buraya taşındı:
+   
     1. Güvenlik Kontrolü (is_plant)
     2. Hata Yönetimi (Exception Handling)
     3. Veri Ayrıştırma (Data Schema)
@@ -49,7 +49,7 @@ def analyze_plant_health(image_path):
             return {"error": "Bu bir bitki değil! Analiz durduruldu."}
 
         # --- MANTIKLI KOD TAŞIMA: Veri Ayrıştırma (Data Parsing) ---
-        # Beray'ın istediği o sade JSON formatına çeviriyoruz
+        # Frontend için istediği o sade JSON formatına çeviriyoruz
         disease_info = result_data.get("disease", {}).get("suggestions", [{}])[0]
         
         clean_output = {
@@ -59,7 +59,7 @@ def analyze_plant_health(image_path):
             "treatment": disease_info.get("details", {}).get("treatment", "Öneri bulunamadı.")
         }
 
-        # Logging: Esma için raporlama kaydı tutuluyor
+        #  raporlama kaydı tutuluyor
         with open("analysis_history.log", "a", encoding="utf-8") as f:
             f.write(f"{datetime.datetime.now()}: {clean_output['disease']} - %{clean_output['accuracy']}\n")
 
