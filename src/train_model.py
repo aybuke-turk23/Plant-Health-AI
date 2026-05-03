@@ -27,7 +27,7 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
     batch_size=BATCH_SIZE
 )
 
-# KANKA BURASI KRİTİK: Sınıf isimlerini ve sayısını alıyoruz
+#  Sınıf isimlerini ve sayısını alıyoruz
 class_names = train_ds.class_names
 num_classes = len(class_names)
 print(f"\n✅ {num_classes} farklı sınıf eğitilecek.")
@@ -58,7 +58,7 @@ model.fit(train_ds, validation_data=val_ds, epochs=15)
 if not os.path.exists('models'): os.makedirs('models')
 model.save('models/plant_health_mobilenet.h5')
 
-# KANKA: Sınıf isimlerini bir yere kaydetmezsek predict yaparken sıralamayı karıştırırız!
+#  Sınıf isimlerini bir yere kaydetmezsek predict yaparken sıralamayı karıştırırız!
 with open('models/classes.txt', 'w') as f:
     for item in class_names:
         f.write("%s\n" % item)

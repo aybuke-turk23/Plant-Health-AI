@@ -31,8 +31,7 @@ def predict_leaf(img_path):
         img = image.load_img(img_path, target_size=(224, 224))
         img_array = image.img_to_array(img)
         
-        # DİKKAT: / 255.0 işlemini kaldırdık! 
-        # Çünkü modelin içindeki Rescaling katmanı bunu zaten yapıyor.
+
         
         img_array = tf.expand_dims(img_array, 0)
 
