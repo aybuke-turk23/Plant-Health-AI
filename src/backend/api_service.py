@@ -2,12 +2,24 @@ import os
 import base64
 import requests
 from dotenv import load_dotenv
-
-# .env dosyasından anahtarı yüklüyoruz
+from src.backend.security_manager import validate_input, check_rate_limit# .env dosyasından anahtarı yüklüyoruz
 load_dotenv()
 API_KEY = os.getenv("PLANT_ID_API_KEY")
 
 def analyze_plant_health(image_path):
+    # 1. Bekleme Süresi Kontrolü
+    can_request, rate_msg = check_rate_limit()
+    if not can_request:
+        print(rate_msg)
+        return None
+
+    # 2. Dosya Geçerlilik Kontrolü
+    is_valid, val_msg = validate_input(image_path)
+    if not is_valid:
+        print(val_msg)
+        return None
+    
+    # ... API çağırma kodları buradan devam eder ...
     """
     Seçilen resmi API'ye gönderir ve analiz sonucunu döner.
     """
