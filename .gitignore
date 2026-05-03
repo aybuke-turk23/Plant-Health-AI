@@ -52,3 +52,5 @@ desktop.ini
 # Legacy model files (Keep local only if desired)
 # src/legacy/
 tempCodeRunnerFile.py
+# Ignore local test images
+test_plant.jpg
