@@ -4,98 +4,98 @@ from PIL import Image, ImageTk
 import sys
 import os
 
-# 1. DOSYA YOLLARINI AYARLAMA (Modüllerin bulunması için kritik)
-# Python'ın ana dizindeki database_manager'ı görmesini sağlar
+# 1. SET FILE PATHS (Critical for module access)
+# Allows Python to access database_manager in the main directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from database_manager import veritabani_hazirla, analiz_kaydet, analizleri_listele # database_manager.py src içindeyse direkt import edilir
-    from predict import predict_leaf # predict.py src içindeyse direkt import edilir
+    from database_manager import veritabani_hazirla, analiz_kaydet, analizleri_listele
+    from predict import predict_leaf
 except ImportError as e:
-    print(f"Hata: Modüller yüklenemedi. Lütfen dosya konumlarını kontrol et kanka! \nDetay: {e}")
+    print(f"Error: Modules could not be loaded. Please check file paths.\nDetails: {e}")
 
-resim_yolu = ""
+image_path = ""
 
-# 2. RESİM SEÇME FONKSİYONU
-def resim_sec():
-    global resim_yolu
-    dosya = filedialog.askopenfilename(
-        title="Bir Bitki Yaprağı Seç",
-        filetypes=[("Resim Dosyaları", "*.jpg *.jpeg *.png")]
+# 2. IMAGE SELECTION FUNCTION
+def select_image():
+    global image_path
+    file = filedialog.askopenfilename(
+        title="Select a Plant Leaf Image",
+        filetypes=[("Image Files", "*.jpg *.jpeg *.png")]
     )
 
-    if dosya:
-        resim_yolu = dosya
-        img = Image.open(dosya)
-        img = img.resize((250, 250)) # Arayüz için boyutlandırma
+    if file:
+        image_path = file
+        img = Image.open(file)
+        img = img.resize((250, 250))  # Resize for UI
         img = ImageTk.PhotoImage(img)
         
-        label_resim.config(image=img)
-        label_resim.image = img
-        sonuc_label.config(text="Resim hazır, analiz butonuna bas!", fg="#1b5e20")
+        label_image.config(image=img)
+        label_image.image = img
+        result_label.config(text="Image ready. Click analyze button!", fg="#1b5e20")
 
-# 3. ANALİZ VE KAYIT FONKSİYONU (Ana Motor)
-def analiz_et():
-    if not resim_yolu:
-        sonuc_label.config(text="⚠️ Lütfen önce bir resim seç kanka!", fg="red")
+# 3. ANALYSIS AND SAVE FUNCTION (Main Engine)
+def analyze():
+    if not image_path:
+        result_label.config(text="⚠️ Please select an image first!", fg="red")
         return
 
-    sonuc_label.config(text="🔍 Analiz ediliyor, lütfen bekle...", fg="#1b5e20")
-    pencere.update() # Arayüzün donmasını engellemek için
+    result_label.config(text="🔍 Analyzing, please wait...", fg="#1b5e20")
+    window.update()  # Prevent UI freezing
 
     try:
-        # AI Modelini Çalıştır
-        hastalik, guven = predict_leaf(resim_yolu)
+        # Run AI Model
+        disease, confidence = predict_leaf(image_path)
         
-        if hastalik:
-            # Ekrana Yazdır
-            sonuc_metni = f"🌿 Sonuç: {hastalik}\n🎯 Güven Oranı: %{guven:.2f}"
-            sonuc_label.config(text=sonuc_metni, fg="#2e7d32")
+        if disease:
+            # Display Result
+            result_text = f"🌿 Result: {disease}\n🎯 Confidence: %{confidence:.2f}"
+            result_label.config(text=result_text, fg="#2e7d32")
             
-            # Veritabanına Kaydet
-            # Bitki türünü tahmin sonucunun ilk kelimesinden alıyoruz (Örn: Tomato)
-            bitki_turu = hastalik.split()[0] 
-            analiz_kaydet(bitki_turu, resim_yolu, hastalik, guven)
-            print(f"✅ Başarılı: {hastalik} veritabanına işlendi.")
+            # Save to Database
+            # Extract plant type from first word of prediction (e.g., Tomato)
+            plant_type = disease.split()[0] 
+            analiz_kaydet(plant_type, image_path, disease, confidence)
+            print(f"✅ Success: {disease} saved to database.")
         else:
-            sonuc_label.config(text="❌ Tahmin başarısız!", fg="red")
+            result_label.config(text="❌ Prediction failed!", fg="red")
 
     except Exception as e:
-        sonuc_label.config(text=f"Hata: {str(e)}", fg="red")
+        result_label.config(text=f"Error: {str(e)}", fg="red")
 
-def gecmisi_goruntule():
-    # 1. Yeni bir pencere oluştur
-    gecmis_penceresi = tk.Toplevel(pencere)
-    gecmis_penceresi.title("Analiz Geçmişi")
-    gecmis_penceresi.geometry("700x450")
-    gecmis_penceresi.config(bg="#f1f8e9")
+def view_history():
+    # 1. Create new window
+    history_window = tk.Toplevel(window)
+    history_window.title("Analysis History")
+    history_window.geometry("700x450")
+    history_window.config(bg="#f1f8e9")
 
-    # Başlık
+    # Title
     tk.Label(
-        gecmis_penceresi, 
-        text="📋 Kayıtlı Analiz Geçmişi", 
+        history_window, 
+        text="📋 Saved Analysis History", 
         font=("Arial", 14, "bold"), 
         bg="#f1f8e9",
         fg="#2e7d32"
     ).pack(pady=15)
 
-    # 2. Kayıtları Veritabanından Çek
+    # 2. Fetch records from database
     try:
         from database_manager import analizleri_listele
-        kayitlar = analizleri_listele()
+        records = analizleri_listele()
     except Exception as e:
-        tk.Label(gecmis_penceresi, text=f"Veri çekme hatası: {e}", fg="red").pack()
+        tk.Label(history_window, text=f"Data fetch error: {e}", fg="red").pack()
         return
 
-    # 3. Liste Alanı ve Scrollbar
-    frame = tk.Frame(gecmis_penceresi, bg="#f1f8e9")
+    # 3. List area and scrollbar
+    frame = tk.Frame(history_window, bg="#f1f8e9")
     frame.pack(fill="both", expand=True, padx=20, pady=10)
 
     scrollbar = tk.Scrollbar(frame)
     scrollbar.pack(side="right", fill="y")
 
-    # Yazı tipi olarak sabit genişlikli (Courier) seçtik ki sütunlar düzgün hizalansın
-    liste = tk.Listbox(
+    # Use monospace font for aligned columns
+    listbox = tk.Listbox(
         frame, 
         font=("Courier New", 10), 
         width=80, 
@@ -104,115 +104,111 @@ def gecmisi_goruntule():
         relief="flat",
         borderwidth=5
     )
-    liste.pack(side="left", fill="both", expand=True)
-    scrollbar.config(command=liste.yview)
+    listbox.pack(side="left", fill="both", expand=True)
+    scrollbar.config(command=listbox.yview)
 
-    # 4. Tablo Başlıkları
-    header = f"{'Bitki':<12} | {'Teşhis':<20} | {'Güven':<10} | {'Tarih'}"
-    liste.insert(tk.END, header)
-    liste.insert(tk.END, "-" * 75)
+    # 4. Table headers
+    header = f"{'Plant':<12} | {'Diagnosis':<20} | {'Confidence':<10} | {'Date'}"
+    listbox.insert(tk.END, header)
+    listbox.insert(tk.END, "-" * 75)
 
-    # 5. Verileri Ekle (Hata Kontrollü)
-    if not kayitlar:
-        liste.insert(tk.END, "Henüz hiç analiz kaydı bulunmuyor.")
+    # 5. Insert data (with error handling)
+    if not records:
+        listbox.insert(tk.END, "No analysis records found yet.")
     else:
-        for satir in kayitlar:
+        for row in records:
             try:
-                # satir içeriği: (id, plant_type, image_path, result, confidence, date)
+                # row structure: (id, plant_type, image_path, result, confidence, date)
                 
-                # Veri tipi dönüşümleri (Hata almamak için her ihtimale karşı)
-                bitki = str(satir[1])
-                teshis = str(satir[3])
-                tarih = str(satir[5])
+                plant = str(row[1])
+                diagnosis = str(row[3])
+                date = str(row[5])
                 
-                # Güven değeri bytes gelirse float'a çeviriyoruz
-                raw_guven = satir[4]
+                raw_confidence = row[4]
                 try:
-                    if isinstance(raw_guven, bytes):
-                        guven_float = float(raw_guven.decode('utf-8'))
+                    if isinstance(raw_confidence, bytes):
+                        confidence_float = float(raw_confidence.decode('utf-8'))
                     else:
-                        guven_float = float(raw_guven)
-                    guven_str = f"{guven_float:.2f}"
+                        confidence_float = float(raw_confidence)
+                    confidence_str = f"{confidence_float:.2f}"
                 except (ValueError, TypeError):
-                    guven_str = str(raw_guven)
-                 
+                    confidence_str = str(raw_confidence)
 
-                # Satırı formatla
-                bilgi = f"{bitki:<12} | {teshis:<20} | {guven_str:<10} | {tarih}"
-                liste.insert(tk.END, bilgi)
+                info = f"{plant:<12} | {diagnosis:<20} | {confidence_str:<10} | {date}"
+                listbox.insert(tk.END, info)
                 
             except Exception as err:
-                print(f"Satır işleme hatası: {err}")
-                continue # Hatalı satırı atla, uygulamayı çökertme
+                print(f"Row processing error: {err}")
+                continue
 
-    # Kapat butonu
-    tk.Button(gecmis_penceresi, text="Pencereyi Kapat", command=gecmis_penceresi.destroy, bg="#81c784").pack(pady=10)
+    # Close button
+    tk.Button(history_window, text="Close Window", command=history_window.destroy, bg="#81c784").pack(pady=10)
 
 
-# 4. GÖRSEL ARAYÜZ (GUI) TASARIMI
-pencere = tk.Tk()
-pencere.title("Plant Health AI - Fırat University")
-pencere.geometry("450x600")
-pencere.config(bg="#f1f8e9")
+# 4. GUI DESIGN
+window = tk.Tk()
+window.title("Plant Health AI - Fırat University")
+window.geometry("450x600")
+window.config(bg="#f1f8e9")
 
-baslik = tk.Label(
-    pencere,
+title = tk.Label(
+    window,
     text="🌱 Plant Health AI",
     font=("Helvetica", 22, "bold"),
     bg="#f1f8e9",
     fg="#2e7d32"
 )
-baslik.pack(pady=20)
+title.pack(pady=20)
 
-btn_sec = tk.Button(
-    pencere,
-    text="📂 Resim Seç",
+btn_select = tk.Button(
+    window,
+    text="📂 Select Image",
     font=("Arial", 11),
     width=20,
-    command=resim_sec,
+    command=select_image,
     bg="white"
 )
-btn_sec.pack(pady=10)
+btn_select.pack(pady=10)
 
-# Resmin önizlemesinin görüneceği beyaz çerçeve
-label_resim = tk.Label(pencere, bg="white", width=300, height=250, relief="solid")
-label_resim.pack(pady=10)
+# Image preview area
+label_image = tk.Label(window, bg="white", width=300, height=250, relief="solid")
+label_image.pack(pady=10)
 
-btn_analiz = tk.Button(
-    pencere,
-    text="🔍 Analizi Başlat",
+btn_analyze = tk.Button(
+    window,
+    text="🔍 Start Analysis",
     font=("Arial", 12, "bold"),
     width=20,
     bg="#4caf50",
     fg="white",
-    command=analiz_et,
+    command=analyze,
     activebackground="#388e3c"
 )
-btn_analiz.pack(pady=20)
+btn_analyze.pack(pady=20)
 
-btn_gecmis = tk.Button(
-    pencere,
-    text="📋 Geçmişi Görüntüle",
+btn_history = tk.Button(
+    window,
+    text="📋 View History",
     font=("Arial", 11),
     width=20,
-    command=gecmisi_goruntule, # yukarıdaki fonksiyonu çağırır
+    command=view_history,
     bg="#81c784",
     fg="white"
 )
-btn_gecmis.pack(pady=5)
+btn_history.pack(pady=5)
 
-sonuc_label = tk.Label(
-    pencere,
-    text="Analiz sonuçları burada görünecek",
+result_label = tk.Label(
+    window,
+    text="Analysis results will appear here",
     font=("Arial", 11, "italic"),
     bg="#f1f8e9",
     fg="#555",
     justify="center"
 )
-sonuc_label.pack(pady=15)
+result_label.pack(pady=15)
 
-# 5. PROGRAMI BAŞLATMA
+# 5. START PROGRAM
 if __name__ == "__main__":
-    # Program açılırken veritabanı klasörü ve tabloları kontrol edilir
+    # Initialize database on startup
     veritabani_hazirla()
-    pencere.mainloop()
+    window.mainloop()

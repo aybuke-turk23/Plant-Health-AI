@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plantaı — Bitki Sağlığı</title>
+    <title>Plant AI — Plant Health</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,8 +20,6 @@
       <span class="orb orb-c"></span>
       <span class="orb orb-d"></span>
       <span class="orb orb-e"></span>
-
-
     </div>
 
     <main class="shell">
@@ -29,33 +27,33 @@
         <span class="logo" aria-hidden="true">🌿</span>
         <div>
           <h1>Plant AI</h1>
-          <p class="tagline">Bitki fotoğrafını yükle, sağlık skorunu ve önerileri al</p>
+          <p class="tagline">Upload a plant photo and get health score and recommendations</p>
         </div>
       </header>
 
-      <section class="composer" aria-label="Görüntü yükleme">
+      <section class="composer" aria-label="Image upload">
         <div
           class="dropzone"
           id="dropzone"
           tabindex="0"
           role="button"
-          aria-label="Dosya sürükleyip bırak veya tıkla"
+          aria-label="Drag and drop a file or click"
         >
           <input type="file" id="file-input" accept="image/*" hidden />
           <div class="dropzone-inner">
             <span class="drop-icon" aria-hidden="true">+</span>
-            <p class="drop-title">Bitki fotoğrafını buraya bırak veya tıkla</p>
-            <p class="drop-hint">PNG, JPG, WebP · API ile analiz</p>
+            <p class="drop-title">Drop your plant image here or click</p>
+            <p class="drop-hint">PNG, JPG, WebP · Analyze via API</p>
           </div>
         </div>
 
         <div class="preview-row hidden" id="preview-row">
-          <img id="preview-img" alt="Önizleme" />
-          <button type="button" class="btn-ghost" id="clear-btn">Kaldır</button>
+          <img id="preview-img" alt="Preview" />
+          <button type="button" class="btn-ghost" id="clear-btn">Remove</button>
         </div>
 
         <button type="button" class="btn-primary" id="analyze-btn" disabled>
-          <span id="btn-label">Analiz et</span>
+          <span id="btn-label">Analyze</span>
           <span class="spinner hidden" id="spinner" aria-hidden="true"></span>
         </button>
       </section>
@@ -69,17 +67,17 @@
             </svg>
             <div class="score-center">
               <span class="score-value" id="score-value">—</span>
-              <span class="score-label">sağlık</span>
+              <span class="score-label">health</span>
             </div>
           </div>
           <p class="summary" id="summary"></p>
           <div class="lists">
             <div>
-              <h2>Tespitler</h2>
+              <h2>Findings</h2>
               <ul id="issues-list"></ul>
             </div>
             <div>
-              <h2>Öneriler</h2>
+              <h2>Recommendations</h2>
               <ul id="recs-list"></ul>
             </div>
           </div>
@@ -89,6 +87,6 @@
       <p class="error hidden" id="error" role="alert"></p>
     </main>
 
-    <script src="js/app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

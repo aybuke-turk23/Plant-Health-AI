@@ -17,8 +17,8 @@
 
   const RING_LEN = 2 * Math.PI * 52;
 
-  /** file:// açılışında API; bilgisayarında 8000 kapalıysa burayı uvicorn portuyla eşle */
-  var DEV_API_ORIGIN = "http://127.0.0.1:8080";
+  /** If opened via file://, match this with your local API port (e.g. uvicorn port) */
+  var DEV_API_ORIGIN = "http://127.0.0.1:5000";
 
   function getAnalyzeUrl() {
     if (window.location.protocol === "file:") {
@@ -67,7 +67,7 @@
 
   function applyFile(file) {
     if (!file || !file.type.startsWith("image/")) {
-      showError("Lütfen geçerli bir görüntü seçin.");
+      showError("Please select a valid image.");
       return;
     }
     selectedFile = file;
@@ -153,7 +153,7 @@
             ? detail
             : Array.isArray(detail)
               ? detail.map(function (d) { return d.msg || d; }).join(" ")
-              : "Analiz başarısız oldu."
+              : "Analysis failed."
         );
         return;
       }
@@ -164,22 +164,22 @@
       resultEl.classList.remove("hidden");
     } catch (err) {
       var lines = [
-        "Sunucuya ulaşılamadı; istek hiç tamamlanmadı (ağ / CORS / kapalı sunucu).",
+        "Could not reach the server; the request did not complete (network / CORS / server offline).",
         "",
       ];
       if (window.location.protocol === "file:") {
         lines.push(
-          "Sayfayı dosyadan (çift tıklama) açtıysanız: analiz için mutlaka Python sunucusunu çalıştırıp siteyi adres çubuğundan açın."
+          "If you opened the page as a file (double-click): you must run the Python server and access the site via browser URL."
         );
         lines.push("");
       }
-      lines.push("1) Proje klasöründe sanal ortamı açın, sonra:");
+      lines.push("1) Activate your virtual environment in the project folder, then run:");
       lines.push("   uvicorn main:app --reload --host 127.0.0.1 --port 8080");
-      lines.push("2) Tarayıcıda açın: http://127.0.0.1:8080");
-      lines.push("(Port 8000 Windows’ta bazen engellenir; 8080 deneyin. Farklı portta app.js içindeki DEV_API_ORIGIN’i güncelleyin.)");
+      lines.push("2) Open in browser: http://127.0.0.1:8080");
+      lines.push("(Port 8000 may be blocked on Windows; try 8080. If using another port, update DEV_API_ORIGIN in app.js.)");
       if (err && err.message) {
         lines.push("");
-        lines.push("Tarayıcı: " + err.message);
+        lines.push("Browser: " + err.message);
       }
       showError(lines.join("\n"));
     } finally {
