@@ -3,7 +3,7 @@
 
 ## 📝 About Project:
 We use Python and Deep Learning .   
-We've set up an API connection to analyze plant diseases.
+We've set up an API connection to analyze plant diseases.(fro the API plant.id)
 
 
 ## 🪛 How to Start:
@@ -49,13 +49,18 @@ uploads/: Temporary storage for images processed through the API.
  The application will be live at http://127.0.0.1:5000.
 
 ## 🖥️ Tech Stack:  
-backend: 
-   programming language:Python 
-   Web framework:Flask 
-   API Structure:RESTful API 
+backend:  
+  programming language:Python   
+  
+   Web framework:Flask  
+   
+   API Structure:RESTful API  
+   
  
-frontend: 
+frontend:  
+
    basic tech stack:HTML5, CSS3, JavaScript 
+   
    UI design:Modern UI 
 
   
