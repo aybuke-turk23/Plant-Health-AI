@@ -59,5 +59,5 @@ def analyze():
 
 if __name__ == '__main__':
     # Initialize the Flask server on port 5000 as expected by the frontend
-    print("Siberay Plant Health Analysis System Initializing...")
+    print(" Plant Health Analysis System Initializing...")
     app.run(debug=True, port=5000)
