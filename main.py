@@ -2,17 +2,16 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 
-# Import the core analysis logic from the backend service
-from src.backend.api_service import analyze_plant_health 
+from src.backend.api_service import analyze_plant_health, get_gemini_chat
 
 app = Flask(__name__, static_folder='src/frontend')
-CORS(app) # Enable CORS for frontend-backend communication
+CORS(app)
 
-# --- ROUTE DEFINITIONS ---
+# --- STATIC FILES ------------------------------------------------------------
 
 @app.route('/')
 def index():
-    """Serves the main index.html file from the frontend static folder."""
+    """Serves the main index.html from the frontend static folder."""
     return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/<path:path>')
@@ -20,44 +19,69 @@ def static_proxy(path):
     """Serves static assets such as CSS, JS, and images."""
     return send_from_directory(app.static_folder, path)
 
+# --- ANALYSIS ENDPOINT -------------------------------------------------------
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
-    """
-    Bridge endpoint that handles analysis requests from the frontend.
-    """
-    # 1. File Validation: Checking if the 'file' key exists in the request
+    """Receives an image, runs plant health analysis, and returns results."""
     if 'file' not in request.files:
         return jsonify({"detail": "No image file selected for analysis."}), 400
-    
+
     image = request.files['file']
-    
-    # 2. Storage Directory Check
+
+    # Create uploads directory if it doesn't exist
     if not os.path.exists('uploads'):
         os.makedirs('uploads')
-    
-    # 3. Save the uploaded image
+
     image_path = os.path.join("uploads", image.filename)
     image.save(image_path)
-    
+
     try:
-        # 4. Backend Analysis: Execute the logic within api_service
         result = analyze_plant_health(image_path)
-        
-        # 5. Data Transformation: Map backend results to frontend requirements
-        # Frontend expects health_percentage, issues, and recommendations (list).
+
+        # Return error if analysis failed
+        if "error" in result:
+            return jsonify({"detail": result["error"]}), 400
+
         return jsonify({
             "health_percentage": int(result.get('accuracy', 0)),
-            "summary": f"Plant Condition: {result.get('disease', 'Analysis Successful')}",
-            "issues": [f"Detection: {result.get('status', 'sick')}"],
-            # Provide a fallback recommendation if no specific treatment is found
-            "recommendations": [result.get('treatment') or "Isolate the plant and monitor humidity levels."]
+            "summary": f"Plant Condition: {result.get('disease', 'Analysis Complete')}",
+            "issues":  [f"Detection: {result.get('status', 'sick')}"],
+            "recommendations": [result.get('treatment') or "Isolate the plant and monitor humidity levels."],
+            # Raw fields used by the frontend chatbot context
+            "disease":   result.get('disease', ''),
+            "status":    result.get('status', ''),
+            "accuracy":  int(result.get('accuracy', 0)),
+            "treatment": result.get('treatment', ''),
         })
-        
+
     except Exception as e:
-        # Generic error handling for the analysis engine
         return jsonify({"detail": f"Analysis engine error: {str(e)}"}), 500
 
+# --- CHAT ENDPOINT -----------------------------------------------------------
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Handles follow-up questions from the AI assistant panel."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request format."}), 400
+
+    user_message    = data.get('message', '').strip()
+    disease_context = data.get('context', '')
+    history         = data.get('history', [])
+
+    if not user_message:
+        return jsonify({"error": "Message cannot be empty."}), 400
+
+    try:
+        reply = get_gemini_chat(user_message, disease_context, history)
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"error": f"Chat error: {str(e)}"}), 500
+
+# --- SERVER ENTRY POINT ------------------------------------------------------
+
 if __name__ == '__main__':
-    # Initialize the Flask server on port 5000 as expected by the frontend
-    print(" Plant Health Analysis System Initializing...")
+    print("Plant Health Analysis System Initializing...")
     app.run(debug=True, port=5000)

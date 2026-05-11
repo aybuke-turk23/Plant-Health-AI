@@ -86,6 +86,32 @@
 
       <p class="error hidden" id="error" role="alert"></p>
     </main>
+    <!-- AI Assistant Panel (Newly Added) -->
+     <div id="ai-assistant-panel" aria-labelledby="assistant-title">
+  <div class="assistant-header">
+    <h3 id="assistant-title"><span>🌿</span> Gemini Plant Assistant</h3>
+    <button type="button" class="close-panel" onclick="toggleAssistant()" aria-label="Close">×</button>
+  </div>
+
+  <!-- Message history area -->
+  <div class="assistant-chat-body" id="chat-messages">
+    <div id="ai-text-area" class="ai-message">
+      Your plant is being analyzed, preparing personalized recommendations for you...
+    </div>
+  </div>
+
+  <!-- Question box (active after analysis) -->
+  <div class="chat-input-row" id="chat-input-row" style="display:none;">
+    <input
+      type="text"
+      id="chat-input"
+      placeholder="Ask your question..."
+      autocomplete="off"
+    />
+    <button type="button" id="chat-send-btn">Send</button>
+  </div>
+</div>
+
 
     <script src="app.js"></script>
   </body>
